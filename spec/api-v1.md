@@ -139,7 +139,7 @@ Mojang names, is in the [appendix](#appendix-mc-mappings-symbols).
 | `select_hotbar_slot(u8) -> Option<()>` | Selects a hotbar slot like scrolling (the game sends the change on its next tick) | `None` | slot > 8 → `InvalidArgument` | `inventory.selected` |
 | `menu() -> Option<MenuSnapshot>` | `player.containerMenu`: its slots in menu order and the carried stack | `None` | indices match `click_slot` | `player.container_menu`, `abstract_container_menu.*`, `slot.get_item`, item readers |
 | `click_slot(slot: i32, button: u8, ClickAction) -> Option<()>` | Clicks slot `slot` **of `player.containerMenu`** through the game's handler (client and server stay in sync); menu indices, not `inventory()` ones | `None` | slot outside the menu or invalid button → `InvalidArgument`; result visible in `menu()` | `client.game_mode`, `multi_player_game_mode.handle_inventory_mouse_click`, `abstract_container_menu.container_id`, `click_type.*` |
-| `screen() -> ScreenKind` | Kind of the open screen | `None` kind | chat, inventory, chest distinguished | `client.screen`, `chat_screen`, `inventory_screen`, `creative_mode_inventory_screen`, `abstract_container_screen` |
+| `screen() -> ScreenKind` | Kind of the open screen | works on any screen: the title screen is `Other`, `None` only when no screen is open | chat, inventory, chest distinguished | `client.screen`, `chat_screen`, `inventory_screen`, `creative_mode_inventory_screen`, `abstract_container_screen` |
 | `drop(entire_stack: bool) -> Option<()>` | Drops the selected hotbar stack (or one item) like the drop key | `None` | count decreases accordingly | `local_player.drop` |
 
 ### Combat, use and blocks
@@ -238,27 +238,30 @@ logic; sockets, raw packets and packet bytes.
   selection.
 - **External members** (JDK, LWJGL, authlib, fastutil) are called by their own names and are not
   mc-mappings symbols: `Object.toString`, `Iterable.iterator`, `Iterator.hasNext/next`,
-  `List.size/get`, `Map.values`, `UUID` bits, `Enum.name`, fastutil `Object2IntMap.Entry`
-  `getKey/getIntValue`, GLFW `glfwGetKey/glfwGetMouseButton`. `GameProfile` differs by authlib
+  `List.size/get`, `Map.values`, `UUID` bits, `Enum.name`, `Number.intValue/doubleValue`,
+  `Double.valueOf`, fastutil `Object2IntMap.Entry` `getKey/getIntValue`, GLFW
+  `glfwGetKey/glfwGetMouseButton`. `GameProfile` differs by authlib
   version: `getName()`/`getId()` in 1.21 (authlib 6.0.54), record accessors `name()`/`id()` in
   1.21.11 (authlib 7.0.61).
 
 ## Appendix: mc-mappings symbols
 
 Checked on 2026-11-11 against the generated mappings of all ten configurations (standard and
-Lunar), with the mc-mappings export and audit.
+Lunar), with the mc-mappings export and audit. mc-mappings `data_version` 1 holds only the first
+row of the count below; the common symbols, with their types, are the generator input
+`mc_mappings_generator/consumers/mc_mappings/catalog-v2-common.json`.
 
 ### Symbol count
 
 | Group | Classes | Fields | Methods |
 | --- | --- | --- | --- |
 | Catalog `data_version` 1 (before this revision) | 19 | 13 | 36 |
-| Added, common to every configuration (verified) | 58 | 75 | 126 |
+| Added, common to every configuration (verified) | 58 | 75 | 127 |
 | Added, same symbol with a version-specific type | 0 | 1 | 4 |
 | Added, 1.21 only | 0 | 0 | 8 |
 | Added, 1.21.11 only | 2 | 0 | 10 |
-| **Total per 1.21 profile** | **77** | **89** | **174** |
-| **Total per 1.21.11 profile** | **79** | **89** | **176** |
+| **Total per 1.21 profile** | **77** | **89** | **175** |
+| **Total per 1.21.11 profile** | **79** | **89** | **177** |
 
 ### Prerequisites in mc-mappings and its generator
 
@@ -272,7 +275,7 @@ Lunar), with the mc-mappings export and audit.
 2. **Version-scoped symbols** (needs mc-mappings `schema_version` 2: a catalog entry may name the
    Minecraft versions it applies to; profiles of other versions omit it and `select` reports it
    as absent for that version). They decode packet content whose structure changed:
-   - 1.21 only: `set_entity_motion_packet.get_xa/get_ya/get_za` (velocity), 
+   - 1.21 only: `set_entity_motion_packet.get_xa/get_ya/get_za` (velocity),
      `teleport_entity_packet.get_x/get_y/get_z/get_y_rot/get_x_rot`.
    - 1.21.11 only: `set_entity_motion_packet.get_movement`, `teleport_entity_packet.change`,
      `teleport_entity_packet.relatives`, `position_move_rotation` (class) `.position/.y_rot/.x_rot`,
@@ -280,7 +283,7 @@ Lunar), with the mc-mappings export and audit.
      `client_packet_listener.handle_entity_position_sync`.
 
    Without schema 2, `EntityMotion` reads and `EntityPosition` cannot be implemented on both
-   versions; every other operation can.
+   versions; every other operation needs at most prerequisite 1.
 
 ### Common symbols (all ten configurations)
 
@@ -320,7 +323,7 @@ symbol keeps its id. Classes without members are declaring or parameter classes.
 | `minecraft.game_renderer` | `client/renderer/GameRenderer` | `pick()`, `getMainCamera()` |
 | `minecraft.hit_result` | `world/phys/HitResult` | `getType()`, `getLocation()` |
 | `minecraft.hit_result_type` | `world/phys/HitResult$Type` | `MISS`, `BLOCK`, `ENTITY` |
-| `minecraft.block_hit_result` | `world/phys/BlockHitResult` | `getBlockPos()`, `getDirection()`, `<init>(4)` |
+| `minecraft.block_hit_result` | `world/phys/BlockHitResult` | `getBlockPos()`, `getDirection()`, `isInside()`, `<init>(4)` |
 | `minecraft.block_pos` | `core/BlockPos` | `<init>(3)`, `getX()`, `getY()`, `getZ()` |
 | `minecraft.direction` | `core/Direction` | `get3DDataValue()`, `from3DDataValue()` |
 | `minecraft.entity_hit_result` | `world/phys/EntityHitResult` | `getEntity()` |
