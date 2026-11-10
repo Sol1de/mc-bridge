@@ -1,0 +1,7 @@
+# mc-bridge
+
+Minecraft façade for native code running inside the game's JVM (Windows x64, Java 21), built on
+[jvm-link](https://github.com/Sol1de/jvm-link) and [mc-mappings](https://github.com/Sol1de/mc-mappings).
+
+**Status:** API v1 catalog frozen ([spec/api-v1.md](spec/api-v1.md)); implementation not started
+(tickets B2 onward).
