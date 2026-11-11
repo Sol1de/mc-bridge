@@ -218,7 +218,7 @@ logic; sockets, raw packets and packet bytes.
 | `EntityMotion` velocity set to zero | the entity does not move from that packet |
 | `inventory()` with a chest closed | armor and offhand read |
 | `set_tick_scale(2.0)` | twice the ticks per second |
-| mc-mappings | every `minecraft.*` symbol of the appendix is in the mc-mappings catalog count and resolves on every configuration (audit) |
+| mc-mappings | every `minecraft.*` symbol of the appendix is in the mc-mappings catalog and resolves on every configuration of the versions it exists in (audit) |
 
 ## Integration contracts
 
@@ -229,7 +229,9 @@ logic; sockets, raw packets and packet bytes.
 - **mc-mappings**: `Dataset::minecraft_v1()` then `Dataset::select(version, launcher, loader)` with
   the detected environment; `Selection::class/field/method` give runtime names, descriptors and
   the static flag. A `ResolveError` aborts the operation (no fallback); an unsupported environment
-  fails `connect`. mc-bridge copies no runtime name.
+  fails `connect`. mc-bridge copies no runtime name. For the packet symbols that exist in one
+  Minecraft version only (appendix), mc-bridge resolves the set of the detected version;
+  `ResolveError::AbsentInVersion` on the other set is expected, not an error.
 - **Bootstrap without circular resolution (B3)**: the environment is detected before any mapping is
   used — loader from its own classes (`net/fabricmc/loader/api/FabricLoader`,
   `net/minecraftforge/fml/loading/FMLLoader`), launcher from Lunar's classes
@@ -247,15 +249,15 @@ logic; sockets, raw packets and packet bytes.
 ## Appendix: mc-mappings symbols
 
 Checked on 2026-11-11 against the generated mappings of all ten configurations (standard and
-Lunar), with the mc-mappings export and audit. mc-mappings `data_version` 1 holds only the first
-row of the count below; the common symbols, with their types, are the generator input
-`mc_mappings_generator/consumers/mc_mappings/catalog-v2-common.json`.
+Lunar), with the mc-mappings export and audit. mc-mappings `data_version` 2 (`schema_version` 2)
+provides all of them; their Mojang names and types are the generator input
+`mc_mappings_generator/consumers/mc_mappings/catalog-v1.json`.
 
 ### Symbol count
 
 | Group | Classes | Fields | Methods |
 | --- | --- | --- | --- |
-| Catalog `data_version` 1 (before this revision) | 19 | 13 | 36 |
+| mc-mappings `data_version` 1 (before this revision) | 19 | 13 | 36 |
 | Added, common to every configuration (verified) | 58 | 75 | 127 |
 | Added, same symbol with a version-specific type | 0 | 1 | 4 |
 | Added, 1.21 only | 0 | 0 | 8 |
@@ -263,27 +265,24 @@ row of the count below; the common symbols, with their types, are the generator 
 | **Total per 1.21 profile** | **77** | **89** | **175** |
 | **Total per 1.21.11 profile** | **79** | **89** | **177** |
 
-### Prerequisites in mc-mappings and its generator
+### Version-dependent symbols
 
-1. **Version-specific types** (supported by table format 1, whose types are per profile): the
-   generator catalog gains `type_by_version` / `parameters_by_version` / `returns_by_version`.
-   Symbols: `entity.fall_distance` (`float` 1.21, `double` 1.21.11),
+1. **Same symbol, version-specific type**: the profile of each version carries its own type.
+   `entity.fall_distance` (`float` 1.21, `double` 1.21.11),
    `game_renderer.get_fov` (returns `double` / `float`),
    `item_cooldowns.get_cooldown_percent` (`(Item, float)` / `(ItemStack, float)`),
    `move_entity_packet.get_y_rot` and `get_x_rot` (`getyRot()`/`getxRot()` returning `byte` in
-   1.21, `getYRot()`/`getXRot()` returning `float` in 1.21.11).
-2. **Version-scoped symbols** (needs mc-mappings `schema_version` 2: a catalog entry may name the
-   Minecraft versions it applies to; profiles of other versions omit it and `select` reports it
-   as absent for that version). They decode packet content whose structure changed:
+   1.21, `getYRot()`/`getXRot()` returning `float` in 1.21.11). mc-bridge converts the value
+   according to the resolved descriptor.
+2. **Version-scoped symbols** (mc-mappings `catalog.scoped`): they exist in one Minecraft version
+   only, and resolving them in the other one gives `AbsentInVersion`. They decode packet content
+   whose structure changed:
    - 1.21 only: `set_entity_motion_packet.get_xa/get_ya/get_za` (velocity),
      `teleport_entity_packet.get_x/get_y/get_z/get_y_rot/get_x_rot`.
    - 1.21.11 only: `set_entity_motion_packet.get_movement`, `teleport_entity_packet.change`,
      `teleport_entity_packet.relatives`, `position_move_rotation` (class) `.position/.y_rot/.x_rot`,
      `entity_position_sync_packet` (class) `.id/.values/.on_ground`,
      `client_packet_listener.handle_entity_position_sync`.
-
-   Without schema 2, `EntityMotion` reads and `EntityPosition` cannot be implemented on both
-   versions; every other operation needs at most prerequisite 1.
 
 ### Common symbols (all ten configurations)
 
